@@ -6,7 +6,9 @@ use warnings;
 use constant REV => "3, 10:20 PM Thursday, May 03, 2018";
 use v5.14;
 sub getCellAliasOrIdx {
-  my (@cellmap, $AliasOrIdx) = (@_[0..$#_-1], @_[$#_]); #Vl.array of arrays matching.. I don't know if it works @animals[1..$#animals]
+  # my (@cellmap, $AliasOrIdx) = (@_[0..$#_-1], @_[$#_]); #Vl.array of arrays matching.. it seems don't work..
+  my @cellmap = @_[0..$#_-1];
+  my $AliasOrIdx = @_[$#_];
   say "last=@_[$#_], aoi=$AliasOrIdx";
   if ($AliasOrIdx =~ /^\d+$/){#Vl. test if is a whole number
       for (my $j = 1; $j < @cellmap; $j += 2) {return $cellmap[$j - 1] if ($cellmap[$j] == $AliasOrIdx)}
@@ -71,7 +73,7 @@ $exp->send("Z;\r");
 $exp->send("Z;\r"); #should exit here..
 foreach (@iws){
   if (/^(TBC|TTRX).(\d+)/) {
-    $_ .= getCellAliasOrIdx @cellmap, $2 if (grep $2, @dtcbIdx)
+    $_ .= "_".getCellAliasOrIdx @cellmap, $2 if (grep $2, @dtcbIdx)
   }
 }
 say "dtcbIdx array: @dtcbIdx";
