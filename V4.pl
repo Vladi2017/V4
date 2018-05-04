@@ -4,6 +4,14 @@ use strict;
 # no strict "refs";
 use warnings;
 use constant REV => "3, 10:20 PM Thursday, May 03, 2018";
+sub getCellAliasOrIdx {
+  my (@cellmap, $AliasOrIdx) = @_; #Vl.array of arrays matching.. I don't know if it works
+  if ($AliasOrIdx =~ /^\d+$/){#Vl. test if is a whole number
+      for (my $j = 1; $j < @cellmap; $j += 2) {return $cellmap[$j - 1] if ($cellmap[$j] == $AliasOrIdx)}
+  } elsif ($AliasOrIdx == 0){ #Vl.Since Perl evaluates any string to 0 if is not a number.
+      for (my $j = 0; $j < @cellmap; $j += 2) {return $cellmap[$j + 1] if ($cellmap[$j] == $AliasOrIdx)}
+  } else {return} #Vl.see np++ issue1
+}
 use Expect;
 use v5.14;
 my @dxt1 = ("10.1.153.4", 5001); #Vl.work both "5001" and (int) 5001
@@ -60,7 +68,31 @@ $get1 = $exp->before;
 push @iws, $1 while $get1 =~ /ALARM\s+(?!HIS)(\S+)/g; #Vl.(?!HIS) is not capture.., it is negative lookahead.., (?=xx) is positive lookahead
 $exp->send("Z;\r");
 $exp->send("Z;\r"); #should exit here..
+foreach (@iws){
+  if (/^(TBC|TTRX).(\d+)/) {
+    $_ .= getCellAliasOrIdx @cellmap, $1 if (grep $1, @dtcbIdx)
+  }
+}
 say "dtcbIdx array: @dtcbIdx";
 say "dtcbIdxAlias array: @dtcbIdxAlias";
-say "iws array: @iws"
+say "iws array: @iws";
 # print "dtcbIdx array: @dtcbIdx"
+
+=begin comment1
+
+Issues:
+issue1: parameter-less return has the magic feature that in scalar context it returns undef, but in list context it returns an empty list (). https://perlmaven.com/how-to-return-undef-from-a-function
+
+batwings@VladiLaptopWXP /home/batwings/projects/perl/V4_DXTtelnet
+$ perl -X ./V4.pl dxt2
+..started ./V4.pl rev.3, 10:20 PM Thursday, May 03, 2018
+started ./V4.pl rev.3, 10:20 PM Thursday, May 03, 2018
+manual_stty: 0
+dtcbIdx array: 66 35 84
+dtcbIdxAlias array: 66 NADRAG 35 ROSIUTA 84 TOROIOAGA
+iws array: TBC-66-0 TTRX-13-0 TTRX-13-1 CLS-0 TDSC-72-0 TDSC-75-0 TBC-84-0 TTRX-84-0 TDSC-1-0 TDSC-62-0
+
+=end comment1
+
+=cut
+
