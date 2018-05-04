@@ -70,7 +70,7 @@ $exp->send("Z;\r");
 $exp->send("Z;\r"); #should exit here..
 foreach (@iws){
   if (/^(TBC|TTRX).(\d+)/) {
-    my @test1 = grep $2, @dtcbIdx;
+    my @test1 = grep $_ == $2, @dtcbIdx;
 	say "test1_arr: @test1";
     $_ .= "_".getCellAliasOrIdx \@cellmap, $2 unless (grep $2, @dtcbIdx)
   }
