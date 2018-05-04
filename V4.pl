@@ -4,8 +4,10 @@ use strict;
 # no strict "refs";
 use warnings;
 use constant REV => "3, 10:20 PM Thursday, May 03, 2018";
+use v5.14;
 sub getCellAliasOrIdx {
-  my (@cellmap, $AliasOrIdx) = @_; #Vl.array of arrays matching.. I don't know if it works
+  my (@cellmap, $AliasOrIdx) = (@_[0..$#_-1], @_[$#_]); #Vl.array of arrays matching.. I don't know if it works @animals[1..$#animals]
+  say "last=@_[$#_], aoi=$AliasOrIdx";
   if ($AliasOrIdx =~ /^\d+$/){#Vl. test if is a whole number
       for (my $j = 1; $j < @cellmap; $j += 2) {return $cellmap[$j - 1] if ($cellmap[$j] == $AliasOrIdx)}
   } elsif ($AliasOrIdx == 0){ #Vl.Since Perl evaluates any string to 0 if is not a number.
@@ -13,7 +15,6 @@ sub getCellAliasOrIdx {
   } else {return} #Vl.see np++ issue1
 }
 use Expect;
-use v5.14;
 my @dxt1 = ("10.1.153.4", 5001); #Vl.work both "5001" and (int) 5001
 my @dxt2 = ("10.1.153.4", 5002);
 my %dxt = (1 => \@dxt1, 2 => \@dxt2); #Vl.hash of arrays
@@ -70,7 +71,7 @@ $exp->send("Z;\r");
 $exp->send("Z;\r"); #should exit here..
 foreach (@iws){
   if (/^(TBC|TTRX).(\d+)/) {
-    $_ .= getCellAliasOrIdx @cellmap, $1 if (grep $1, @dtcbIdx)
+    $_ .= getCellAliasOrIdx @cellmap, $2 if (grep $2, @dtcbIdx)
   }
 }
 say "dtcbIdx array: @dtcbIdx";
