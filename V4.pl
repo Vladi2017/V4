@@ -6,14 +6,11 @@ use warnings;
 use constant REV => "3, 10:20 PM Thursday, May 03, 2018";
 use v5.14;
 sub getCellAliasOrIdx {
-  # my (@cellmap, $AliasOrIdx) = (@_[0..$#_-1], @_[$#_]); #Vl.array of arrays matching.. it seems don't work..
-  my @cellmap = @_[0..$#_-1];
-  my $AliasOrIdx = @_[$#_];
-  say "last=@_[$#_], aoi=$AliasOrIdx";
+  my ($cellmapref, $AliasOrIdx) = @_[0, 1]; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
   if ($AliasOrIdx =~ /^\d+$/){#Vl. test if is a whole number
-      for (my $j = 1; $j < @cellmap; $j += 2) {return $cellmap[$j - 1] if ($cellmap[$j] == $AliasOrIdx)}
+      for (my $j = 1; $j < @{$cellmapref}; $j += 2) {return $cellmapref->[$j - 1] if ($cellmapref->[$j] == $AliasOrIdx)}
   } elsif ($AliasOrIdx == 0){ #Vl.Since Perl evaluates any string to 0 if is not a number.
-      for (my $j = 0; $j < @cellmap; $j += 2) {return $cellmap[$j + 1] if ($cellmap[$j] == $AliasOrIdx)}
+      for (my $j = 0; $j < @{$cellmapref}; $j += 2) {return $cellmapref->[$j + 1] if ($cellmapref->[$j] == $AliasOrIdx)}
   } else {return} #Vl.see np++ issue1
 }
 use Expect;
@@ -73,7 +70,9 @@ $exp->send("Z;\r");
 $exp->send("Z;\r"); #should exit here..
 foreach (@iws){
   if (/^(TBC|TTRX).(\d+)/) {
-    $_ .= "_".getCellAliasOrIdx @cellmap, $2 if (grep $2, @dtcbIdx)
+    my @test1 = grep $2, @dtcbIdx;
+	say "test1_arr: @test1";
+    $_ .= "_".getCellAliasOrIdx \@cellmap, $2 unless (grep $2, @dtcbIdx)
   }
 }
 say "dtcbIdx array: @dtcbIdx";
