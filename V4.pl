@@ -3,7 +3,7 @@
 use strict;
 # no strict "refs";
 use warnings;
-use constant REV => "3, 10:20 PM Thursday, May 03, 2018";
+use constant REV => "4, 6:10 PM Friday, May 04, 2018";
 use v5.14;
 sub getCellAliasOrIdx {
   my ($cellmapref, $AliasOrIdx) = @_[0, 1]; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
@@ -70,9 +70,7 @@ $exp->send("Z;\r");
 $exp->send("Z;\r"); #should exit here..
 foreach (@iws){
   if (/^(TBC|TTRX).(\d+)/) {
-    my @test1 = grep $_ == $2, @dtcbIdx;
-	say "test1_arr: @test1";
-    $_ .= "_".getCellAliasOrIdx \@cellmap, $2 unless (grep $2, @dtcbIdx)
+    $_ .= "_".getCellAliasOrIdx \@cellmap, $2 if (not grep $_ == $2, @dtcbIdx)
   }
 }
 say "dtcbIdx array: @dtcbIdx";
