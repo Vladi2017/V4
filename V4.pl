@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 ##Vl.8:30 PM Wednesday, May 02, 2018: $ perl -c V4.pl; $ perl ./V4.pl; RO2 (elements) recovering code..
+package Foo;
 use strict;
 # no strict "refs";
 use warnings;
@@ -13,16 +14,20 @@ sub getCellAliasOrIdx {
       for (my $j = 0; $j < @{$cellmapref}; $j += 2) {return $cellmapref->[$j + 1] if ($cellmapref->[$j] == $AliasOrIdx)}
   } else {return} #Vl.see np++ issue1
 }
-use Expect;
+# our $exp;
 sub zusiUnit {
-  my $unit = shift; my $exp = shift;
+  my $unit = shift; my $exp1 = shift;
   # $exp->log_stdout(1);
   $unit =~ /^(.+)_/; $unit = $1; $unit =~ s/-/,/g;
   say $unit;
-  $exp->send("ZUSI:$unit;\r");
+  $exp1->log_stdout(1);
+  $exp1->send("ZUSI:$unit;\r");
   # $exp->send("?\r");
-  # $exp->log_stdout(0);
+  $exp1->clear_accum();
+  $exp1->expect(10, '_>');
+  $exp1->log_stdout(0);
 }
+use Expect;
 my @dxt1 = ("10.1.153.4", 5001); #Vl.work both "5001" and (int) 5001
 my @dxt2 = ("10.1.153.4", 5002);
 my %dxt = (1 => \@dxt1, 2 => \@dxt2); #Vl.hash of arrays
@@ -83,12 +88,7 @@ foreach (@iws){
 	}
   }
 }
-$exp->log_stdout(1);
-# zusiUnit $suspect_iws[0], $exp;
-$exp->send("?\r");
-$exp->clear_accum();
-# sleep 5;
-$exp->expect(10, '_>');
+zusiUnit $suspect_iws[0], $exp;
 $exp->send("Z;\r");
 $exp->send("Z;\r"); #should exit here..
 say "dtcbIdx array: @dtcbIdx";
