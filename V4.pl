@@ -14,18 +14,52 @@ sub getCellAliasOrIdx {
       for (my $j = 0; $j < @{$cellmapref}; $j += 2) {return $cellmapref->[$j + 1] if ($cellmapref->[$j] == $AliasOrIdx)}
   } else {return} #Vl.see np++ issue1
 }
+sub get_iws {
+  my $exp = $_[2];
+  $exp->send("ZAHO::NR=2692;\r"); #Vl.get INCORRECT WORKING STATE (iws) alarms
+  my @iws; #Vl.(np++)iws array.
+  $exp->expect(10, 'EXECUTED');
+  my $get1 = $exp->before;
+  # say "Vladi INCORRECT WORKING STATE list:\n", $get1;
+  push @iws, $1 while $get1 =~ /ALARM\s+(?!HIS)(\S+)/g; #Vl.(?!HIS)tory is not capture.., it is negative lookahead.., (?=xx) is positive lookahead
+  my @suspect_iws; #Vl.treat for now only TBCs and TTRXs
+  foreach (@iws){
+    if (/^(TBC|TTRX).(\d+)/) {
+      if (not grep $_ == $2, @{$_[0]}){ #Vl. @{$_[0] is @dtcbIdx
+  	  $_ .= "_".getCellAliasOrIdx $_[1], $2; #Vl. $_[1] is \@cellmap
+  	  push @suspect_iws, $2
+  	  }
+    }
+  }
+  return @iws
+}
 # our $exp;
-sub zusiUnit {
+sub zuscUnit {
   my $unit = shift; my $exp1 = shift;
-  # $exp->log_stdout(1);
-  $unit =~ /^(.+)_/; $unit = $1; $unit =~ s/-/,/g;
-  say $unit;
+  $unit =~ /^(.+)_/; $unit = $1; my $unitCmd = $unit; $unitCmd =~ s/-/,/g;
+  say $unitCmd;
   $exp1->log_stdout(1);
-  $exp1->send("ZUSI:$unit;\r");
-  # $exp->send("?\r");
-  $exp1->clear_accum();
-  $exp1->expect(10, '_>');
+  $exp1->send("ZUSI:$unitCmd;\r"); $exp1->clear_accum();
+  $exp1->expect(10, 'EXECUTED');
+  my $get1 = $exp1->before;
+  $get1 =~ /$unit\s+(\S+)/;
+  my $state = $1;
+  if ($state eq "SE-OU"){
+    $exp1->send("ZUSC:$unitCmd:TE;\r");
+    $exp1->expect(10, 'COMMAND EXECUTED');
+    $get1 = $exp1->before;
+	return undef unless $get1 =~ /NEW STATE = TE-EX/;
+	$state = "TE-EX"
+  }
+  if ($state eq "TE-EX"){
+    $exp1->send("ZUSC:$unitCmd:WO;\r");
+    $exp1->expect(10, 'COMMAND EXECUTED');
+    $get1 = $exp1->before;
+	return undef unless $get1 =~ /NEW STATE = WO-EX/;
+    return 1
+  }
   $exp1->log_stdout(0);
+  return undef
 }
 use Expect;
 my @dxt1 = ("10.1.153.4", 5001); #Vl.work both "5001" and (int) 5001
@@ -73,27 +107,13 @@ for (my $i = 0; $i < @dtcbIdx; $i++) {
 	}
   }
 }
-$exp->send("ZAHO::NR=2692;\r"); #Vl.get INCORRECT WORKING STATE (iws) alarms
-my @iws; #Vl.(np++)iws array.
-$exp->expect(10, 'EXECUTED');
-$get1 = $exp->before;
-# say "Vladi INCORRECT WORKING STATE list:\n", $get1;
-push @iws, $1 while $get1 =~ /ALARM\s+(?!HIS)(\S+)/g; #Vl.(?!HIS) is not capture.., it is negative lookahead.., (?=xx) is positive lookahead
-my @suspect_iws; #Vl.treat for now only TBCs and TTRXs
-foreach (@iws){
-  if (/^(TBC|TTRX).(\d+)/) {
-    if (not grep $_ == $2, @dtcbIdx){
-	  $_ .= "_".getCellAliasOrIdx \@cellmap, $2;
-	  push @suspect_iws, $2
-	}
-  }
-}
-zusiUnit $suspect_iws[0], $exp;
-$exp->send("Z;\r");
-$exp->send("Z;\r"); #should exit here..
+# say "Fail to zusc the unit $suspect_iws[0] .." if not zuscUnit $suspect_iws[0], $exp;
 say "dtcbIdx array: @dtcbIdx";
 say "dtcbIdxAlias array: @dtcbIdxAlias";
-say "iws array: @iws";
+my @iws = get_iws \@dtcbIdx, \@cellmap, $exp;
+say "initial iws array: @iws";
+$exp->send("Z;\r");
+$exp->send("Z;\r"); #should exit here..
 # print "dtcbIdx array: @dtcbIdx"
 
 =begin comment1
