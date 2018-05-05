@@ -27,11 +27,11 @@ sub get_iws {
     if (/^(TBC|TTRX).(\d+)/) {
       if (not grep $_ == $2, @{$_[0]}){ #Vl. @{$_[0] is @dtcbIdx
   	  $_ .= "_".getCellAliasOrIdx $_[1], $2; #Vl. $_[1] is \@cellmap
-  	  push @suspect_iws, $2
+  	  push @suspect_iws, $_
   	  }
     }
   }
-  return @iws
+  return (\@iws, \@suspect_iws)
 }
 # our $exp;
 sub zuscUnit {
@@ -107,13 +107,16 @@ for (my $i = 0; $i < @dtcbIdx; $i++) {
 	}
   }
 }
-# say "Fail to zusc the unit $suspect_iws[0] .." if not zuscUnit $suspect_iws[0], $exp;
 say "dtcbIdx array: @dtcbIdx";
 say "dtcbIdxAlias array: @dtcbIdxAlias";
-my @iws = get_iws \@dtcbIdx, \@cellmap, $exp;
-say "initial iws array: @iws";
+my ($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
+say "initial iws array: @{$iwsref}";
+say "initial suspect_iws array: @{$suspect_iwsref}";
+say "Fail to zusc the unit $suspect_iwsref->[0] .." if not zuscUnit $suspect_iwsref->[0], $exp; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
+($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
 $exp->send("Z;\r");
 $exp->send("Z;\r"); #should exit here..
+say "final iws array: @{$iwsref}";
 # print "dtcbIdx array: @dtcbIdx"
 
 =begin comment1
