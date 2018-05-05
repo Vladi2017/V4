@@ -4,7 +4,7 @@ package Foo;
 use strict;
 # no strict "refs";
 use warnings;
-use constant REV => "4, 6:10 PM Friday, May 04, 2018";
+use constant REV => "5, 12:27 AM Sunday, May 06, 2018";
 use v5.14;
 sub getCellAliasOrIdx {
   my ($cellmapref, $AliasOrIdx) = @_[0, 1]; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
@@ -31,14 +31,14 @@ sub get_iws {
   	  }
     }
   }
-  return (\@iws, \@suspect_iws)
+  return \@iws, \@suspect_iws
 }
 # our $exp;
 sub zuscUnit {
   my $unit = shift; my $exp1 = shift;
   $unit =~ /^(.+)_/; $unit = $1; my $unitCmd = $unit; $unitCmd =~ s/-/,/g;
   say $unitCmd;
-  $exp1->log_stdout(1);
+  # $exp1->log_stdout(1);
   $exp1->send("ZUSI:$unitCmd;\r"); $exp1->clear_accum();
   $exp1->expect(10, 'EXECUTED');
   my $get1 = $exp1->before;
@@ -58,7 +58,7 @@ sub zuscUnit {
 	return undef unless $get1 =~ /NEW STATE = WO-EX/;
     return 1
   }
-  $exp1->log_stdout(0);
+  # $exp1->log_stdout(0);
   return undef
 }
 use Expect;
@@ -111,8 +111,9 @@ say "dtcbIdx array: @dtcbIdx";
 say "dtcbIdxAlias array: @dtcbIdxAlias";
 my ($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
 say "initial iws array: @{$iwsref}";
-say "initial suspect_iws array: @{$suspect_iwsref}";
-say "Fail to zusc the unit $suspect_iwsref->[0] .." if not zuscUnit $suspect_iwsref->[0], $exp; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
+# say "initial suspect_iws array: @{$suspect_iwsref}";
+# say "Fail to zusc the unit $suspect_iwsref->[0] .." if not zuscUnit $suspect_iwsref->[0], $exp; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
+foreach (@{$suspect_iwsref}) {say "Fail to zusc the unit $_ .." if not zuscUnit $_, $exp}
 ($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
 $exp->send("Z;\r");
 $exp->send("Z;\r"); #should exit here..
