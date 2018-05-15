@@ -1,4 +1,5 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl -X
+#####!/usr/bin/env perl
 ##Vl.8:30 PM Wednesday, May 02, 2018: $ perl -c V4.pl; $ perl ./V4.pl; RO2 (elements) recovering code..
 package Foo;
 use strict;
@@ -26,8 +27,8 @@ sub get_iws {
   foreach (@iws){
     if (/^(TBC|TTRX).(\d+)/) {
       if (not grep $_ == $2, @{$_[0]}){ #Vl. @{$_[0] is @dtcbIdx
-  	  $_ .= "_".getCellAliasOrIdx $_[1], $2; #Vl. $_[1] is \@cellmap
-  	  push @suspect_iws, $_
+  	    $_ .= "_".getCellAliasOrIdx $_[1], $2; #Vl. $_[1] is \@cellmap
+  	    push @suspect_iws, $_
   	  }
     }
   }
@@ -117,7 +118,7 @@ foreach (@{$suspect_iwsref}) {say "Fail to zusc the unit $_ .." if not zuscUnit 
 ($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
 $exp->send("Z;\r");
 $exp->send("Z;\r"); #should exit here..
-say "final iws array: @{$iwsref}";
+say "..final iws array: @{$iwsref}";
 # print "dtcbIdx array: @dtcbIdx"
 
 =begin comment1
