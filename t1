@@ -14,9 +14,9 @@ while (<$hcfg1>) {
   s/\s+$//;
   # say $_
   if (/Socket/){
-    /=\s*(.*$)/;
-	push @dxt1, split /,\s*/, $1 if /dxt1/;
-	push @dxt2, split /,\s*/, $1 if /dxt2/;
+    /=\s*(.*$)/; my $cut1 = $1;
+	push @dxt1, split /,\s*/, $cut1 if /dxt1/;
+	push @dxt2, split /,\s*/, $cut1 if /dxt2/;
   }
 }
 say "dxt1: @dxt1";
