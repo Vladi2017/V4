@@ -1,0 +1,42 @@
+#!/usr/bin/perl -X
+##Vl.started: 6:21 PM Wednesday, May 16, 2018: $ perl -c V4.pl; $ perl ./V4.pl; RO2 (elements) recovering code..
+use strict;
+# no strict "refs";
+use warnings;
+use constant REV => "1, 6:22 PM Wednesday, May 16, 2018";
+my (@dxt1, @dxt2);
+open my $hcfg1, '<', "./V4cfg1" or die "Can't open the file ./V4cfg1: $!";
+use v5.14;
+while (<$hcfg1>) {
+  chomp;
+  next if /^\s*$/ or /^#/;
+  s/\s*#.*$// if /#/;
+  s/\s+$//;
+  # say $_
+  if (/Socket/){
+    /=\s*(.*$)/;
+	push @dxt1, split /,\s*/, $1 if /dxt1/;
+	push @dxt2, split /,\s*/, $1 if /dxt2/;
+  }
+}
+say "dxt1: @dxt1";
+say "dxt2: @dxt2";
+
+=begin comment1
+
+https://stackoverflow.com/a/47664214/3180812
+rename($file, $file.'.bak');
+open(IN, '<'.$file.'.bak') or die $!;
+open(OUT, '>'.$file) or die $!;
+while(<IN>)
+{
+    $_ =~ s/blue/red/g;
+    print OUT $_;
+}
+close(IN);
+close(OUT);
+
+=end comment1
+
+=cut
+
