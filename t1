@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use constant REV => "1, 6:22 PM Wednesday, May 16, 2018";
 my (@dxt1, @dxt2);
+my (@prev_dxt1_dtcbIdx, @prev_dxt2_dtcbIdx, @prev_dxt1_iws, @prev_dxt2_iws); #Vl. prev=previous.
 open my $hcfg1, '<', "./V4cfg1" or die "Can't open the file ./V4cfg1: $!";
 use v5.14;
 while (<$hcfg1>) {
@@ -12,15 +13,39 @@ while (<$hcfg1>) {
   next if /^\s*$/ or /^#/;
   s/\s*#.*$// if /#/;
   s/\s+$//;
-  # say $_
+  say $_;
+  my $cut1;
   if (/Socket/){
-    /=\s*(.*$)/; my $cut1 = $1;
-	push @dxt1, split /,\s*/, $cut1 if /dxt1/;
-	push @dxt2, split /,\s*/, $cut1 if /dxt2/;
+      /=\s*(.*$)/; $cut1 = $1;
+	  push @dxt1, split /,\s*/, $cut1 if /dxt1/;
+	  push @dxt2, split /,\s*/, $cut1 if /dxt2/;
+  } elsif (/dtcbIdx(?!Alias)/) {
+      /:\s*(.*$)/; $cut1 = $1;
+	  push @prev_dxt1_dtcbIdx, split /\s+/, $cut1 if /dxt1/;
+	  push @prev_dxt2_dtcbIdx, split /\s+/, $cut1 if /dxt2/;
+  } elsif (/iws/) {
+      /:\s*(.*$)/; $cut1 = $1;
+	  push @prev_dxt1_iws, split /\s+/, $cut1 if /dxt1/;
+	  push @prev_dxt2_iws, split /\s+/, $cut1 if /dxt2/;
   }
 }
+close $hcfg1;
 say "dxt1: @dxt1";
 say "dxt2: @dxt2";
+say "prev_dxt1_dtcbIdx: @prev_dxt1_dtcbIdx";
+say "prev_dxt1_dtcbIdx[3]: $prev_dxt1_dtcbIdx[3]";
+say "prev_dxt2_dtcbIdx: @prev_dxt2_dtcbIdx";
+say "prev_dxt1_iws: @prev_dxt1_iws";
+say "prev_dxt2_iws: @prev_dxt2_iws";
+my @curr_dxt1_iws = qw(TTRX-58-0 TBC-58-0 TDSC-3-0 TDSC-1-3 TBC-62-0);
+say '@curr_dxt1_iws = '."@curr_dxt1_iws";
+my @listCmp_result;
+push @INC, "../";
+require Vutils::Vutils1;
+@listCmp_result = listCmp(\@curr_dxt1_iws, \@prev_dxt1_iws, "diff");
+x();
+say '@listCmp_result = listCmp(\@curr_dxt1_iws, \@prev_dxt1_iws, "diff");';
+say "listCmp_result: @listCmp_result";
 
 =begin comment1
 
