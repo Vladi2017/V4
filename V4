@@ -62,12 +62,7 @@ sub zuscUnit {
   # $exp1->log_stdout(0);
   return undef
 }
-use Expect;
-my @dxt1 = ("10.1.153.4", 5001); #Vl.work both "5001" and (int) 5001
-my @dxt2 = ("10.1.153.4", 5002);
-my %dxt = (1 => \@dxt1, 2 => \@dxt2); #Vl.hash of arrays
-undef my $dxtNum;
-undef my $monitoring;
+
 my $Usage = "Usage:\n$0 [--help]\n$0 dxt1|dxt2\n$0 --monitoringRO2\n";
 # say "nr params: ", $#ARGV + 1, " @ARGV";
 say "..started $0 rev.", REV;
@@ -79,6 +74,33 @@ for ($ARGV[$#ARGV]){
   $monitoring = 1	when $_ eq "--monitoringRO2";
   default {die $Usage}
 }
+use Expect;
+my (@dxt1, @dxt2);
+open my $in, '<', "./V4test1" or die "Can't open the file ./V4test1: $!";
+while (<$in>) {
+  chomp;
+  next if /^\s*#*;
+  s/\s*#.*$// if /#/;
+  s/\s+$//;
+  # say $_;
+  my $cut1;
+  if (/Socket/){
+      /=\s*(.*$)/; $cut1 = $1;
+	  push @dxt1, split /,\s*/, $cut1 if /dxt1/;
+	  push @dxt2, split /,\s*/, $cut1 if /dxt2/;
+  } elsif (/dtcbIdx(?!Alias)/) {
+      /:\s*(.*$)/; $cut1 = $1;
+	  push @prev_dxt1_dtcbIdx, split /\s+/, $cut1 if /dxt1/;
+	  push @prev_dxt2_dtcbIdx, split /\s+/, $cut1 if /dxt2/;
+  } elsif (/iws/) {
+      /:\s*(.*$)/; $cut1 = $1;
+	  push @prev_dxt1_iws, split /\s+/, $cut1 if /dxt1/;
+	  push @prev_dxt2_iws, split /\s+/, $cut1 if /dxt2/;
+  }
+}
+my %dxt = (1 => \@dxt1, 2 => \@dxt2); #Vl.hash of arrays
+undef my $dxtNum;
+undef my $monitoring;
 open my $handle1, '<', "./dxt$dxtNum"."Cells.txt" or die "Can't open the file ./dxt$dxtNum"."Cells.txt: $!";
 my @cellmap;
 while (<$handle1>) {chomp; push @cellmap, split(/ +/)} #Vl.avoid \n on last field

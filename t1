@@ -4,13 +4,17 @@ use strict;
 # no strict "refs";
 use warnings;
 use constant REV => "1, 6:22 PM Wednesday, May 16, 2018";
-my (@dxt1, @dxt2);
-my (@prev_dxt1_dtcbIdx, @prev_dxt2_dtcbIdx, @prev_dxt1_iws, @prev_dxt2_iws); #Vl. prev=previous.
-my @curr_dxt1_iws = qw(TTRX-58-0 TBC-58-0 TDSC-3-0 TDSC-1-3 TBC-62-0);
 push @INC, "../";
 require Vutils::Vutils1;
 open my $in, '<', "./V4test1" or die "Can't open the file ./V4test1: $!";
 open my $out, '>', "./V4test1new" or die "Can't open the file ./V4test1new: $!";
+my (@dxt1S, @dxt2S);
+my (@prev_dxt1_dtcbIdx, @prev_dxt2_dtcbIdx, @prev_dxt1_iws, @prev_dxt2_iws); #Vl. prev=previous.
+my @curr_dxt1_iws = qw(TTRX-58-0 TBC-58-0 TDSC-3-0 TDSC-1-3 TBC-62-0);
+my %dxt1 = (Socket => \@dxt1S, dtcbIdx => \@prev_dxt1_dtcbIdx, iws => \@prev_dxt1_iws);
+my %dxt2 = (Socket => \@dxt2S, dtcbIdx => \@prev_dxt2_dtcbIdx, iws => \@prev_dxt2_iws);
+my %dxt = (1 => \%dxt1, 2 => \%dxt2); #Vl.(previous) dxt status (hash of hashes)
+my $dxtNum = shift;
 use v5.14;
 while (<$in>) {
   chomp; ##Vl.it seems it works also without chomp
@@ -22,8 +26,8 @@ while (<$in>) {
   my $cut1;
   if (/Socket/){
       /=\s*(.*$)/; $cut1 = $1;
-	  push @dxt1, split /,\s*/, $cut1 if /dxt1/;
-	  push @dxt2, split /,\s*/, $cut1 if /dxt2/;
+	  push @dxt1S, split /,\s*/, $cut1 if /dxt1/;
+	  push @dxt2S, split /,\s*/, $cut1 if /dxt2/;
   } elsif (/dtcbIdx(?!Alias)/) {
       /:\s*(.*$)/; $cut1 = $1;
 	  push @prev_dxt1_dtcbIdx, split /\s+/, $cut1 if /dxt1/;
@@ -44,21 +48,23 @@ while (<$in>) {
 }
 close $in;
 close $out; unlink $in; rename "./V4test1new", "./V4test1";
-say "dxt1: @dxt1";
-say "dxt2: @dxt2";
-say "prev_dxt1_dtcbIdx: @prev_dxt1_dtcbIdx";
-say "prev_dxt1_dtcbIdx[3]: $prev_dxt1_dtcbIdx[3]";
-say "prev_dxt2_dtcbIdx: @prev_dxt2_dtcbIdx";
-say "prev_dxt1_iws: @prev_dxt1_iws";
-say "prev_dxt2_iws: @prev_dxt2_iws";
+say "dxt"."$dxtNum: @{$dxt{$dxtNum}->{Socket}}";
+# say "dxt2: @dxt2";
+say "prev_dxt$dxtNum"."_dtcbIdx: @{$dxt{$dxtNum}->{dtcbIdx}}"; ##@prev_dxt1_dtcbIdx";
+say "prev_dxt1_dtcbIdx[3]: $dxt{$dxtNum}->{dtcbIdx}[3]"; ##$prev_dxt1_dtcbIdx[3]";
+say "prev_dxt$dxtNum"."_iws: @{$dxt{$dxtNum}->{iws}}"; ##@prev_dxt1_iws";
 say '@curr_dxt1_iws = '."@curr_dxt1_iws";
 my @listCmp_result;
-@listCmp_result = listCmp(\@curr_dxt1_iws, \@prev_dxt1_iws, "diff");
+@listCmp_result = listCmp(\@curr_dxt1_iws, $dxt{$dxtNum}->{iws}, "diff");
 x();
 say '@listCmp_result = listCmp(\@curr_dxt1_iws, \@prev_dxt1_iws, "diff");';
 say "listCmp_result: @listCmp_result";
 
 =begin comment1
+
+@{$dxt{$dxtNum}->{Socket}}		##Vl. array in hash of hashes (of arrays)
+@{$dxt->{$dxtNum}->{Socket}}	##Vl. array in href of hashes (of arrays)
+
 
 https://stackoverflow.com/a/47664214/3180812
 rename($file, $file.'.bak');
