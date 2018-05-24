@@ -163,7 +163,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 			open my $out, '>', "./V4ref2new" or die "Can't open the file ./V4ref2new: $!";
 			while (<$in>) {
 				if (/^\s*dxt$dxtNum(?=_)/) {
-					/(^\s*.*:\s*)/; my $entry = $1;
+					/(^\s*.*?:\s*)/; my $entry = $1; ##Vl.non-greedy
 					say $out $entry."@dtcbIdx ##Vl. ".scalar localtime if /dtcbIdx(?!Alias)/;
 					say $out $entry."@dtcbIdxAlias ##Vl. ".scalar localtime if /dtcbIdxAlias/;
 					say $out $entry."@{$iwsref} ##Vl. ".scalar localtime."\n" if /iws/;
