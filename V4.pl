@@ -84,6 +84,7 @@ require Vutils::Vutils1;
 sub mainWork1 {#Vl.use external var. $dxtNum
 	my (@dxt1S, @dxt2S);
 	my (@prev_dtcbIdx, @prev_iws);
+	my $telnet = "telnet";
 	open my $in, '<', "./V4ref2" or die "Can't open the file ./V4ref2: $!";
 	while (<$in>) {
 		last if /comment/;
@@ -104,6 +105,9 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 		} elsif (/iws/) {
 				/:\s*(.*$)/; $cut1 = $1;
 				push @prev_iws, split /\s+/, $cut1 if /dxt$dxtNum/;
+		} elsif (/telnet/) {
+				/=\s*(.*$)/;
+				$telnet = $1
 		}
 	}
 	close $in;
@@ -113,7 +117,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	while (<$handle1>) {chomp; push @cellmap, split(/ +/)} #Vl.avoid \n on last field
 	close $handle1;
 	undef my $timeout;
-	my $exp = Expect->new("telnet", @{$dxtS{$dxtNum}}); #Vl. @{$aref}
+	my $exp = Expect->new($telnet, @{$dxtS{$dxtNum}}); #Vl. @{$aref}
 	# $exp->send("\r\n\r\n");
 	# say "manual_stty: ", $exp->manual_stty;
 	$exp->log_stdout(0);
@@ -140,6 +144,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	my ($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
 	sub log1 {
 		say "\n\ndxt$dxtNum log, ".scalar localtime;
+		no warnings;
 		say "dtcbIdx array: @dtcbIdx";
 		say "dtcbIdxAlias array: @dtcbIdxAlias"
 	}
@@ -151,7 +156,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	} else {
 			log1;
 			say "initial iws array: @{$iwsref}";
-			foreach (@{$suspect_iwsref}) {say "Fail to zusc the unit $_ .." if not zuscUnit $_, $exp}
+			foreach (@{$suspect_iwsref}) {say "  ..Fail to zusc the unit $_ .." if not zuscUnit $_, $exp}
 			($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
 			say "..final iws array: @{$iwsref}";
 			open $in, '<', "./V4ref2" or die "Can't open the file ./V4ref2: $!";
