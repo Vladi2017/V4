@@ -1,0 +1,55 @@
+		## V4 (an attempt code for recovering TETRA RO2 network equipment) Configuration and (previous session) Status file.
+#Sockets:
+dxt1Socket = 10.1.153.4,  5001 #Vl.work both "5001" and (int) 5001; "=" and "#" are key chars.
+dxt2Socket = 10.1.153.4,	5002
+		
+#previous check session Status:	## ":" and "#" are key chars.
+		## previous dxt1 status:
+dxt1_dtcbIdx: 58 57   38   39 37 67		63 30 68		69 62 36
+dxt1_dtcbIdxAlias: 58 MESTECANIS 57 VATRADORNEI 38 CARLIBABA 39 BOTOS 37 STULPICANI 67 VARFULRARAU 63 PODUCOSNEI 30 MOLDOVA 68 BROSTENI 69 BREAZA 62 VATRADORNEIAGA 36 VFRARAUAGA              
+dxt1_iws: TDSC-1-3 TDSC-30-0 TTRX-58-0 TBC-58-0 TDSC-3-0 TTRX-57-0 TTRX-69-0 TTRX-67-0 TTRX-37-0 TBC-57-0 TBC-62-0 TTRX-30-0 TBC-69-0 TTRX-30-1 TBC-67-0 TTRX-36-0 TTRX-62-0 TBC-36-0 TTRX-69-1 TBC-37-0 TBC-63-0 TBC-30-0 TBC-68-0 TTRX-63-0 TTRX-68-0
+
+		
+		##previous dxt2 status:
+dxt2_dtcbIdx: 66 35
+dxt2_dtcbIdxAlias: 66 NADRAG 35 ROSIUTA
+dxt2_iws: CLS-0 TDSC-72-0 TDSC-82-0 TDSC-75-0 TDSC-52-0 TDSC-1-0 TDSC-62-0
+
+From here are comments.., put what do you want:
+
+rev.5 .. OK!!!!!!!!!!
+    
+batwings@VladiLaptopWXP /home/batwings/projects/perl/V4_DXTtelnet
+$ perl -X ./V4.pl dxt1
+..started ./V4.pl rev.5, 12:27 AM Sunday, May 06, 2018
+manual_stty: 0
+dtcbIdx array: 66 58 38 39
+dtcbIdxAlias array: 66 DOSCINA 58 MESTECANIS 38 CARLIBABA 39 BOTOS
+initial iws array: TDSC-1-3 TDSC-30-0 TTRX-58-0 TBC-58-0 TBC-66-0 TTRX-66-0 TTRX-66-1 TDSC-3-0 TBC-92-0_TLREPGURAPORT TDSC-1-0 TTRX-92-1_TLREPGURAPORT TTRX-92-0_TLREPGURAPORT
+TBC,92,0
+TTRX,92,1
+TTRX,92,0
+final iws array: TDSC-1-3 TDSC-30-0 TTRX-58-0 TBC-58-0 TBC-66-0 TTRX-66-0 TTRX-66-1 TDSC-3-0 TDSC-1-0
+
+batwings@VladiLaptopWXP /home/batwings/projects/perl/V4_DXTtelnet
+$ perl -X ./V4.pl dxt2
+..started ./V4.pl rev.5, 12:27 AM Sunday, May 06, 2018
+manual_stty: 0
+dtcbIdx array: 66 35 84
+dtcbIdxAlias array: 66 NADRAG 35 ROSIUTA 84 TOROIOAGA
+initial iws array: TTRX-32-0_DLALION TBC-66-0 TDSC-81-0 CLS-0 TDSC-72-0 TTRX-32-1_DLALION TDSC-75-0 TBC-84-0 TTRX-84-0 TDSC-1-0 TDSC-62-0
+TTRX,32,0
+TTRX,32,1
+final iws array: TBC-66-0 TDSC-81-0 CLS-0 TDSC-72-0 TDSC-75-0 TBC-84-0 TTRX-84-0 TDSC-1-0 TDSC-62-0
+
+//Vl. related to: D:\Profiles\Administrator\My Documents\docs\diagrams\Various1.vsd - diagram: V4.
+********Persistent recovering failure********
+Current Session: 	dtcbIdx, dtcbIdxAlias, initial iws, suspect_iws, final_iws
+Previous Session: prev_dtcbIdx, prev_iws
+@ = list, set
+@prev_dtcbIdx<-@dtcbIdx;
+if @dtcbIdx == @prev_dtcbIdx and not @suspect_iws >> V4log1 timeStamp+noNews
+if @dtcbIdx == @prev_dtcbIdx and @suspect_iws {
+  if
+}
+>> V4log1 timeStamp+noNews

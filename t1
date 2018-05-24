@@ -39,9 +39,9 @@ while (<$in>) {
 	  if (/dxt1_iws/) {
 	    if (not @curr_dxt1_iws == @prev_dxt1_iws or listCmp(\@curr_dxt1_iws, \@prev_dxt1_iws) != @curr_dxt1_iws){
 	      /(.*:\s*)/;
-		  print $out $1."@curr_dxt1_iws"; say $out " ##Vl. ".scalar localtime;
-		  next
-		}
+				print $out $1."@curr_dxt1_iws"; say $out " ##Vl. ".scalar localtime;
+				next
+			}
 	  }
   }
   print $out $origLine."\n"; next
