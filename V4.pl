@@ -5,7 +5,7 @@ package Foo;
 use strict;
 # no strict "refs";
 use warnings;
-use constant REV => "6, 6:55 PM Wednesday, May 23, 2018";
+use constant REV => "8, 7:10 PM Friday, May 25, 2018";
 use v5.14;
 sub getCellAliasOrIdx {
   my ($cellmapref, $AliasOrIdx) = @_[0, 1]; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
@@ -47,14 +47,14 @@ sub zuscUnit {
   my $state = $1;
   if ($state eq "SE-OU"){
     $exp1->send("ZUSC:$unitCmd:TE;\r");
-    $exp1->expect(10, 'COMMAND EXECUTED');
+    $exp1->expect(20, 'COMMAND EXECUT');
     $get1 = $exp1->before;
 		return undef unless $get1 =~ /NEW STATE = TE-EX/;
 		$state = "TE-EX"
   }
   if ($state eq "TE-EX"){
     $exp1->send("ZUSC:$unitCmd:WO;\r");
-    $exp1->expect(10, 'COMMAND EXECUTED');
+    $exp1->expect(20, 'COMMAND EXECUT');
     $get1 = $exp1->before;
 		return undef unless $get1 =~ /NEW STATE = WO-EX/;
 		say " ..done.";
@@ -81,6 +81,8 @@ say "..started $0 rev.", REV if not $monitoring;
 use Expect;
 push @INC, "../";
 require Vutils::Vutils1;
+my $period = 3; ##minutes
+
 sub mainWork1 {#Vl.use external var. $dxtNum
 	my (@dxt1S, @dxt2S);
 	my (@prev_dtcbIdx, @prev_iws);
@@ -108,6 +110,9 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 		} elsif (/telnet/) {
 				/=\s*(.*$)/;
 				$telnet = $1
+		} elsif (/period/) {
+				/=\s*(.*$)/;
+				$period = $1;
 		}
 	}
 	close $in;
@@ -142,23 +147,23 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 		}
 	}
 	my ($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
-	sub log1 {
+	my $log1 = sub {
 		say "\n\ndxt$dxtNum log, ".scalar localtime;
-		no warnings;
+		# no warnings;
 		say "dtcbIdx array: @dtcbIdx";
 		say "dtcbIdxAlias array: @dtcbIdxAlias"
-	}
+	};
 	# say "initial suspect_iws array: @{$suspect_iwsref}";
 	# say "Fail to zusc the unit $suspect_iwsref->[0] .." if not zuscUnit $suspect_iwsref->[0], $exp; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
 	if (@dtcbIdx == @prev_dtcbIdx and not listCmp(\@dtcbIdx, \@prev_dtcbIdx, "diff") and not @{$suspect_iwsref}){
 			print scalar localtime, " dxt$dxtNum:_NoNews;; ";
-			if (not $monitoring) {log1;	say "iws array: @{$iwsref}"}
+			if (not $monitoring) {&$log1;	say "iws array: @{$iwsref}"}
 	} else {
-			log1;
+			&$log1;
 			say "initial iws array: @{$iwsref}";
 			foreach (@{$suspect_iwsref}) {say "  ..Fail to zusc the unit $_ .." if not zuscUnit $_, $exp}
 			($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
-			say "..final iws array: @{$iwsref}";
+			say "..final iws array: @{$iwsref}\n";
 			open $in, '<', "./V4ref2" or die "Can't open the file ./V4ref2: $!";
 			open my $out, '>', "./V4ref2new" or die "Can't open the file ./V4ref2new: $!";
 			while (<$in>) {
@@ -166,7 +171,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 					/(^\s*.*?:\s*)/; my $entry = $1; ##Vl.non-greedy
 					say $out $entry."@dtcbIdx ##Vl. ".scalar localtime if /dtcbIdx(?!Alias)/;
 					say $out $entry."@dtcbIdxAlias ##Vl. ".scalar localtime if /dtcbIdxAlias/;
-					say $out $entry."@{$iwsref} ##Vl. ".scalar localtime."\n" if /iws/;
+					say $out $entry."@{$iwsref} ##Vl. ".scalar localtime if /iws/;
 					next
 				}
 				print $out $_
@@ -184,10 +189,10 @@ if ($monitoring){
   while () {
     $dxtNum = 1;
 		mainWork1;
-		sleep 30;
+		sleep $period * 12;
     $dxtNum = 2;
 		mainWork1;
-		sleep 180
+		sleep $period * 60
   }
 }
 mainWork1;
