@@ -5,7 +5,7 @@ package Foo;
 use strict;
 # no strict "refs";
 use warnings;
-use constant REV => "8, 7:10 PM Friday, May 25, 2018";
+use constant REV => "9, 2:34 PM Monday, May 28, 2018";
 use v5.14;
 sub getCellAliasOrIdx {
   my ($cellmapref, $AliasOrIdx) = @_[0, 1]; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
@@ -27,17 +27,17 @@ sub get_iws {
   foreach (@iws){
     if (/^(TBC|TTRX).(\d+)/) {
       if (not grep $_ == $2, @{$_[0]}){ #Vl. @{$_[0]} is \@dtcbIdx
-  	    $_ .= "_".getCellAliasOrIdx $_[1], $2; #Vl. $_[1] is \@cellmap
+  	    $_ .= "-".getCellAliasOrIdx $_[1], $2; #Vl. $_[1] is \@cellmap
   	    push @suspect_iws, $_
   	  }
     }
   }
-  return \@iws, \@suspect_iws
+  return \@iws, \@suspect_iws	##Vl.returned $iws has aliasis for each $suspect_iws
 }
 # our $exp;
 sub zuscUnit {
   my $unit = shift; my $exp1 = shift;
-  $unit =~ /^(.+)_/; $unit = $1; my $unitCmd = $unit; $unitCmd =~ s/-/,/g;
+  $unit =~ /^(.+)-/; $unit = $1; my $unitCmd = $unit; $unitCmd =~ s/-/,/g;
   print $unitCmd;
   # $exp1->log_stdout(1);
   $exp1->send("ZUSI:$unitCmd;\r"); $exp1->clear_accum();
@@ -64,7 +64,7 @@ sub zuscUnit {
   return undef
 }
 
-my $Usage = "Usage:\n$0 [--help]\n$0 dxt1|dxt2\n$0 --monitoringRO2\n";
+my $Usage = "Usage:\n$0 [--help]\n$0 dxt1|dxt2\n$0 --monitoringRO2 ##Vl.mainly for run as service.\n";
 # say "nr params: ", $#ARGV + 1, " @ARGV";
 undef my $dxtNum;
 undef my $monitoring;
@@ -85,9 +85,9 @@ my $period = 3; ##minutes
 
 sub mainWork1 {#Vl.use external var. $dxtNum
 	my (@dxt1S, @dxt2S);
-	my (@prev_dtcbIdx, @prev_iws);
+	my (@prev_dtcbIdx, @prev_dtcbIdxAlias, @prev_iws);
 	my $telnet = "telnet";
-	open my $in, '<', "./V4ref2" or die "Can't open the file ./V4ref2: $!";
+	open my $in, '<', "./V4ref2" or die "Can't open the file ./V4ref2: $! .., ##Vl. you should run from V4 directory..\n";
 	while (<$in>) {
 		last if /comment/;
 		chomp;
@@ -104,6 +104,9 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 		} elsif (/dtcbIdx(?!Alias)/) {
 				/:\s*(.*$)/; $cut1 = $1;
 				push @prev_dtcbIdx, split /\s+/, $cut1 if /dxt$dxtNum/;
+		} elsif (/dtcbIdx(?=Alias)/) {
+				/:\s*(.*$)/; $cut1 = $1;
+				push @prev_dtcbIdxAlias, split /\s+/, $cut1 if /dxt$dxtNum/;
 		} elsif (/iws/) {
 				/:\s*(.*$)/; $cut1 = $1;
 				push @prev_iws, split /\s+/, $cut1 if /dxt$dxtNum/;
@@ -117,10 +120,10 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	}
 	close $in;
 	my %dxtS = (1 => \@dxt1S, 2 => \@dxt2S); #Vl.hash of arrays
-	open my $handle1, '<', "./dxt$dxtNum"."Cells.txt" or die "Can't open the file ./dxt$dxtNum"."Cells.txt: $!";
+	open my $hDxtCells, '<', "./dxt$dxtNum"."Cells.txt" or die "Can't open the file ./dxt$dxtNum"."Cells.txt: $!";
 	my @cellmap;
-	while (<$handle1>) {chomp; push @cellmap, split(/ +/)} #Vl.avoid \n on last field
-	close $handle1;
+	while (<$hDxtCells>) {chomp; push @cellmap, split(/ +/)} #Vl.avoid \n on last field
+	close $hDxtCells;
 	undef my $timeout;
 	my $exp = Expect->new($telnet, @{$dxtS{$dxtNum}}); #Vl. @{$aref}
 	# $exp->send("\r\n\r\n");
@@ -153,36 +156,57 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 		say "dtcbIdx array: @dtcbIdx";
 		say "dtcbIdxAlias array: @dtcbIdxAlias"
 	};
-	# say "initial suspect_iws array: @{$suspect_iwsref}";
-	# say "Fail to zusc the unit $suspect_iwsref->[0] .." if not zuscUnit $suspect_iwsref->[0], $exp; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
-	if (@dtcbIdx == @prev_dtcbIdx and not listCmp(\@dtcbIdx, \@prev_dtcbIdx, "diff") and not @{$suspect_iwsref}){
-			print scalar localtime, " dxt$dxtNum:_NoNews;; ";
-			if (not $monitoring) {&$log1;	say "iws array: @{$iwsref}"}
-	} else {
-			&$log1;
-			say "initial iws array: @{$iwsref}";
-			foreach (@{$suspect_iwsref}) {say "  ..Fail to zusc the unit $_ .." if not zuscUnit $_, $exp}
-			($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
-			say "..final iws array: @{$iwsref}\n";
-			open $in, '<', "./V4ref2" or die "Can't open the file ./V4ref2: $!";
-			open my $out, '>', "./V4ref2new" or die "Can't open the file ./V4ref2new: $!";
-			while (<$in>) {
-				if (/^\s*dxt$dxtNum(?=_)/) {
-					/(^\s*.*?:\s*)/; my $entry = $1; ##Vl.non-greedy
-					say $out $entry."@dtcbIdx ##Vl. ".scalar localtime if /dtcbIdx(?!Alias)/;
-					say $out $entry."@dtcbIdxAlias ##Vl. ".scalar localtime if /dtcbIdxAlias/;
-					say $out $entry."@{$iwsref} ##Vl. ".scalar localtime if /iws/;
-					next
-				}
-				print $out $_
-			}
-			close $in;
-			close $out; unlink $in; rename "./V4ref2new", "./V4ref2";
+	##Vl.recovering & logging..
+	my $sChg1 = 0; ##Vl.statusChanged degree from prev. session
+	if (my @c = listCmp(\@dtcbIdxAlias, \@prev_dtcbIdxAlias, "diff")){ #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
+		print scalar localtime, " dxt$dxtNum:_dtcb-Reestablished: @c;; " if not @{$suspect_iwsref};
+		$sChg1 |= 0b1
+	}
+	if (my @c = listCmp(\@prev_dtcbIdxAlias, \@dtcbIdxAlias, "diff")){
+		print scalar localtime, " dxt$dxtNum:" if not @{$suspect_iwsref} and not $sChg1;
+		print "_dtcb-new_faults: @c;; " if not @{$suspect_iwsref};
+		$sChg1 |= 0b10
+	}
+	if (my @c = listCmp($iwsref, \@prev_iws, "diff")){
+		my @ar; ##Vl.AutoRecovered
+		foreach (@c) {
+			/^.*?-(\d+)/; #Vl.non-greedy
+			push @ar, $_ if not grep $1 == $_, @prev_dtcbIdx
+		}
+		print scalar localtime, " dxt$dxtNum:" if @ar and not $sChg1;
+		print "_iws-AutoRecovered: @ar;; " if @ar;
+		$sChg1 |= 0b100
+	}
+	$sChg1 |= 0b1000 if listCmp(\@prev_iws, $iwsref, "diff");
+	print scalar localtime, " dxt$dxtNum:_NoNews;; " if not @{$suspect_iwsref} and not $sChg1 and @dtcbIdx == @prev_dtcbIdx and not listCmp(\@dtcbIdx, \@prev_dtcbIdx, "diff");
+	if (not $monitoring and not @{$suspect_iwsref}) {&$log1;	say "iws array: @{$iwsref}"}
+	if (@{$suspect_iwsref}) {
+		&$log1;
+		say "initial iws array: @{$iwsref}";
+		foreach (@{$suspect_iwsref}) {say "  ..Fail to zusc the unit $_ .." if not zuscUnit $_, $exp}
+		($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
+		say "..final iws array: @{$iwsref}\n";
 	}
 	$exp->send("Z;\r");
 	$exp->send("Z;\r"); #should exit here..
 	# print "dtcbIdx array: @dtcbIdx"
 	# say "progam arguments: @ARGV";
+	if ($sChg1){
+		open $in, '<', "./V4ref2" or die "Can't open the file ./V4ref2: $!";
+		open my $out, '>', "./V4ref2new" or die "Can't open the file ./V4ref2new: $!";
+		while (<$in>) {
+			undef my $flag;
+			if (/^\s*dxt$dxtNum(?=_)/) {
+				/(^\s*.*?:\s*)/; my $entry = $1; ##Vl.non-greedy
+				if (/dtcbIdx(?!Alias)/ and $sChg1 & 0b11) {say $out $entry."@dtcbIdx ##Vl. ".scalar localtime; $flag = 1}
+				if (/dtcbIdxAlias/ and $sChg1 & 0b11) {say $out $entry."@dtcbIdxAlias ##Vl. ".scalar localtime; $flag = 1}
+				if (/iws/ and $sChg1 >= 4) {say $out $entry."@{$iwsref} ##Vl. ".scalar localtime; $flag = 1}
+			}
+			print $out $_ unless $flag
+		}
+		close $in;
+		close $out; unlink $in; rename "./V4ref2new", "./V4ref2";
+	}
 }
 
 if ($monitoring){
