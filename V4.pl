@@ -5,7 +5,7 @@ package Foo;
 use strict;
 # no strict "refs";
 use warnings;
-use constant REV => "9, 2:34 PM Monday, May 28, 2018";
+use constant REV => "10, 4:38 PM Tuesday, May 29, 2018";
 use v5.14;
 sub getCellAliasOrIdx {
   my ($cellmapref, $AliasOrIdx) = @_[0, 1]; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
@@ -64,7 +64,8 @@ sub zuscUnit {
   return undef
 }
 
-my $Usage = "Usage:\n$0 [--help]\n$0 dxt1|dxt2\n$0 --monitoringRO2 ##Vl.mainly for run as service.\n";
+my $Usage = "Usage:\n$0 [--help]\n$0 dxt1|dxt2\n$0 --monitoringRO2 ##Vl.mainly for run as service.\n".
+"Other options for service mode in ./V4ref2 config file..\n";
 # say "nr params: ", $#ARGV + 1, " @ARGV";
 undef my $dxtNum;
 undef my $monitoring;
@@ -81,7 +82,10 @@ say "..started $0 rev.", REV if not $monitoring;
 use Expect;
 push @INC, "../";
 require Vutils::Vutils1;
-my $period = 3; ##minutes
+my %opt = (	#Vl.options
+    period  => 3, ##minutes
+    nnm => "ts dxt$dxtNum:_noNews;; ", ##noNewsMessage
+);
 
 sub mainWork1 {#Vl.use external var. $dxtNum
 	my (@dxt1S, @dxt2S);
@@ -115,7 +119,11 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 				$telnet = $1
 		} elsif (/period/) {
 				/=\s*(.*$)/;
-				$period = $1;
+				$opt{period} = $1;
+		} elsif (/noNewsM/) {
+				/=\s*(.*$)/;
+				$opt{nnm} = $1;
+				$opt{nnm} =~ s/\$dxtNum/$dxtNum/;
 		}
 	}
 	close $in;
@@ -159,11 +167,11 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	##Vl.recovering & logging..
 	my $sChg1 = 0; ##Vl.statusChanged degree from prev. session
 	if (my @c = listCmp(\@dtcbIdxAlias, \@prev_dtcbIdxAlias, "diff")){ #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
-		print scalar localtime, " dxt$dxtNum:_dtcb-Reestablished: @c;; " if not @{$suspect_iwsref};
+		print " ", scalar localtime, " dxt$dxtNum:_dtcb-Reestablished: @c;; " if not @{$suspect_iwsref};
 		$sChg1 |= 0b1
 	}
 	if (my @c = listCmp(\@prev_dtcbIdxAlias, \@dtcbIdxAlias, "diff")){
-		print scalar localtime, " dxt$dxtNum:" if not @{$suspect_iwsref} and not $sChg1;
+		print " ", scalar localtime, " dxt$dxtNum:" if not @{$suspect_iwsref} and not $sChg1;
 		print "_dtcb-new_faults: @c;; " if not @{$suspect_iwsref};
 		$sChg1 |= 0b10
 	}
@@ -173,12 +181,16 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 			/^.*?-(\d+)/; #Vl.non-greedy
 			push @ar, $_ if not grep $1 == $_, @prev_dtcbIdx
 		}
-		print scalar localtime, " dxt$dxtNum:" if @ar and not $sChg1;
+		print " ", scalar localtime, " dxt$dxtNum:" if @ar and not $sChg1;
 		print "_iws-AutoRecovered: @ar;; " if @ar;
 		$sChg1 |= 0b100
 	}
 	$sChg1 |= 0b1000 if listCmp(\@prev_iws, $iwsref, "diff");
-	print scalar localtime, " dxt$dxtNum:_NoNews;; " if not @{$suspect_iwsref} and not $sChg1 and @dtcbIdx == @prev_dtcbIdx and not listCmp(\@dtcbIdx, \@prev_dtcbIdx, "diff");
+	if ($opt{nnm} and not @{$suspect_iwsref} and not $sChg1 and @dtcbIdx == @prev_dtcbIdx and not listCmp(\@dtcbIdx, \@prev_dtcbIdx, "diff")){
+		print scalar localtime if $opt{nnm} =~ /^ts/;
+		$opt{nnm} =~ s/^ts\s+//;
+		print $opt{nnm}
+	}
 	if (not $monitoring and not @{$suspect_iwsref}) {&$log1;	say "iws array: @{$iwsref}"}
 	if (@{$suspect_iwsref}) {
 		&$log1;
@@ -213,10 +225,10 @@ if ($monitoring){
   while () {
     $dxtNum = 1;
 		mainWork1;
-		sleep $period * 12;
+		sleep $opt{period} * 12;
     $dxtNum = 2;
 		mainWork1;
-		sleep $period * 60
+		sleep $opt{period} * 60
   }
 }
 mainWork1;
