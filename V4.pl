@@ -5,7 +5,7 @@ package Foo;
 use strict;
 # no strict "refs";
 use warnings;
-use constant REV => "10, 4:38 PM Tuesday, May 29, 2018";
+use constant REV => "11, 1:30 PM Sunday, June 03, 2018";
 use v5.14;
 sub getCellAliasOrIdx {
   my ($cellmapref, $AliasOrIdx) = @_[0, 1]; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
@@ -52,6 +52,7 @@ sub zuscUnit {
 		return undef unless $get1 =~ /NEW STATE = TE-EX/;
 		$state = "TE-EX"
   }
+	sleep 3; #Vld.a little guard
   if ($state eq "TE-EX"){
     $exp1->send("ZUSC:$unitCmd:WO;\r");
     $exp1->expect(20, 'COMMAND EXECUT');
@@ -194,10 +195,12 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	if (not $monitoring and not @{$suspect_iwsref}) {&$log1;	say "iws array: @{$iwsref}"}
 	if (@{$suspect_iwsref}) {
 		&$log1;
+		my @iiws = @{$iwsref}; #Vld.initial iws, case dxt2 log, Sun Jun  3 06:43:43 2018 in V4log1 file
 		say "initial iws array: @{$iwsref}";
 		foreach (@{$suspect_iwsref}) {say "  ..Fail to zusc the unit $_ .." if not zuscUnit $_, $exp}
 		($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
 		say "..final iws array: @{$iwsref}\n";
+		$sChg1 |= 0b100 if @{$iwsref} != @iiws
 	}
 	$exp->send("Z;\r");
 	$exp->send("Z;\r"); #should exit here..
