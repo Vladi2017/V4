@@ -5,7 +5,7 @@ package Foo;
 use strict;
 # no strict "refs";
 use warnings;
-use constant REV => "11, 1:30 PM Sunday, June 03, 2018";
+use constant REV => "12, 4:29 PM Monday, June 11, 2018";
 use v5.14;
 sub getCellAliasOrIdx {
   my ($cellmapref, $AliasOrIdx) = @_[0, 1]; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
@@ -16,7 +16,7 @@ sub getCellAliasOrIdx {
   } else {return} #Vl.see np++ issue1
 }
 sub get_iws {
-  my $exp = $_[2];
+  my $exp = $_[3];
   $exp->send("ZAHO::NR=2692;\r"); #Vl.get INCORRECT WORKING STATE (iws) alarms
   my @iws; #Vl.(np++)iws array.
   $exp->expect(10, 'EXECUTED');
@@ -32,6 +32,10 @@ sub get_iws {
   	  }
     }
   }
+	if (@{$_[2]}) {#Vld.iws_ignore1
+		@iws = listCmp($_[2], \@iws, "diff");
+		@suspect_iws = listCmp($_[2], \@suspect_iws, "diff")
+	}
   return \@iws, \@suspect_iws	##Vl.returned $iws has aliasis for each $suspect_iws
 }
 # our $exp;
@@ -91,6 +95,7 @@ my %opt = (	#Vl.options
 sub mainWork1 {#Vl.use external var. $dxtNum
 	my (@dxt1S, @dxt2S);
 	my (@prev_dtcbIdx, @prev_dtcbIdxAlias, @prev_iws);
+	undef my @iws_ignore1;
 	my $telnet = "telnet";
 	open my $in, '<', "./V4ref2" or die "Can't open the file ./V4ref2: $! .., ##Vl. you should run from V4 directory..\n";
 	while (<$in>) {
@@ -112,6 +117,9 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 		} elsif (/dtcbIdx(?=Alias)/) {
 				/:\s*(.*$)/; $cut1 = $1;
 				push @prev_dtcbIdxAlias, split /\s+/, $cut1 if /dxt$dxtNum/;
+		} elsif (/iws_ignore/) {
+				/:\s*(.*$)/; $cut1 = $1;
+				push @iws_ignore1, split /,\s*/, $cut1 if /dxt$dxtNum/
 		} elsif (/iws/) {
 				/:\s*(.*$)/; $cut1 = $1;
 				push @prev_iws, split /\s+/, $cut1 if /dxt$dxtNum/;
@@ -124,7 +132,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 		} elsif (/noNewsM/) {
 				/=\s*(.*$)/;
 				$opt{nnm} = $1;
-				$opt{nnm} =~ s/\$dxtNum/$dxtNum/;
+				$opt{nnm} =~ s/\$dxtNum/$dxtNum/
 		}
 	}
 	close $in;
@@ -158,12 +166,13 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 		}
 		}
 	}
-	my ($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
+	my ($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, \@iws_ignore1, $exp;
 	my $log1 = sub {
 		say "\n\ndxt$dxtNum log, ".scalar localtime;
 		# no warnings;
 		say "dtcbIdx array: @dtcbIdx";
-		say "dtcbIdxAlias array: @dtcbIdxAlias"
+		say "dtcbIdxAlias array: @dtcbIdxAlias";
+		say "iws ignored resources: @iws_ignore1" if @iws_ignore1
 	};
 	##Vl.recovering & logging..
 	my $sChg1 = 0; ##Vl.statusChanged degree from prev. session
@@ -198,7 +207,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 		my @iiws = @{$iwsref}; #Vld.initial iws, case dxt2 log, Sun Jun  3 06:43:43 2018 in V4log1 file
 		say "initial iws array: @{$iwsref}";
 		foreach (@{$suspect_iwsref}) {say "  ..Fail to zusc the unit $_ .." if not zuscUnit $_, $exp}
-		($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, $exp;
+		($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, \@iws_ignore1, $exp;
 		say "..final iws array: @{$iwsref}\n";
 		$sChg1 |= 0b100 if @{$iwsref} != @iiws
 	}
@@ -215,7 +224,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 				/(^\s*.*?:\s*)/; my $entry = $1; ##Vl.non-greedy
 				if (/dtcbIdx(?!Alias)/ and $sChg1 & 0b11) {say $out $entry."@dtcbIdx ##Vl. ".scalar localtime; $flag = 1}
 				if (/dtcbIdxAlias/ and $sChg1 & 0b11) {say $out $entry."@dtcbIdxAlias ##Vl. ".scalar localtime; $flag = 1}
-				if (/iws/ and $sChg1 >= 4) {say $out $entry."@{$iwsref} ##Vl. ".scalar localtime; $flag = 1}
+				if (/iws(?!_ignore)/ and $sChg1 >= 4) {say $out $entry."@{$iwsref} ##Vl. ".scalar localtime; $flag = 1}
 			}
 			print $out $_ unless $flag
 		}

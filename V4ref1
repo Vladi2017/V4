@@ -14,6 +14,8 @@
 #Sockets:
 dxt1Socket = 10.1.153.4,  5001 #Vl.work both "5001" and (int) 5001; "=" and "#" are key chars.
 dxt2Socket = 10.1.153.4,	5002
+
+# dxt2_iws_ignore: TTRX-55-0-JRLUGOJ, TBC-55-0-JRLUGOJ
 		
 #previous check session Status:	## ":" and "#" are key chars.
 		## previous dxt1 status:
