@@ -5,7 +5,7 @@ package Foo;
 use strict;
 # no strict "refs";
 use warnings;
-use constant REV => "12, 4:29 PM Monday, June 11, 2018";
+use constant REV => "13, 8:56 PM Tuesday, June 12, 2018";
 use v5.14;
 sub getCellAliasOrIdx {
   my ($cellmapref, $AliasOrIdx) = @_[0, 1]; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
@@ -41,14 +41,15 @@ sub get_iws {
 # our $exp;
 sub zuscUnit {
   my $unit = shift; my $exp1 = shift;
-  $unit =~ /^(.+)-/; $unit = $1; my $unitCmd = $unit; $unitCmd =~ s/-/,/g;
-  print $unitCmd;
+  print $unit;
+	$unit =~ /^(.+)-/; $unit = $1; my $unitCmd = $unit; $unitCmd =~ s/-/,/g;
   # $exp1->log_stdout(1);
   $exp1->send("ZUSI:$unitCmd;\r"); $exp1->clear_accum();
   $exp1->expect(10, 'EXECUTED');
   my $get1 = $exp1->before;
   $get1 =~ /$unit\s+(\S+)/;
   my $state = $1;
+	sleep 1; #Vld.a little guard
   if ($state eq "SE-OU"){
     $exp1->send("ZUSC:$unitCmd:TE;\r");
     $exp1->expect(20, 'COMMAND EXECUT');
@@ -56,7 +57,7 @@ sub zuscUnit {
 		return undef unless $get1 =~ /NEW STATE = TE-EX/;
 		$state = "TE-EX"
   }
-	sleep 3; #Vld.a little guard
+	sleep 2;
   if ($state eq "TE-EX"){
     $exp1->send("ZUSC:$unitCmd:WO;\r");
     $exp1->expect(20, 'COMMAND EXECUT');
@@ -177,12 +178,12 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	##Vl.recovering & logging..
 	my $sChg1 = 0; ##Vl.statusChanged degree from prev. session
 	if (my @c = listCmp(\@dtcbIdxAlias, \@prev_dtcbIdxAlias, "diff")){ #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
-		print " ", scalar localtime, " dxt$dxtNum:_dtcb-Reestablished: @c;; " if not @{$suspect_iwsref};
+		print " ", scalar localtime, " dxt$dxtNum:_dtcb-Reestablished: @c;; ";
 		$sChg1 |= 0b1
 	}
 	if (my @c = listCmp(\@prev_dtcbIdxAlias, \@dtcbIdxAlias, "diff")){
-		print " ", scalar localtime, " dxt$dxtNum:" if not @{$suspect_iwsref} and not $sChg1;
-		print "_dtcb-new_faults: @c;; " if not @{$suspect_iwsref};
+		print " ", scalar localtime, " dxt$dxtNum:" if not $sChg1;
+		print "_dtcb-new_faults: @c;; ";
 		$sChg1 |= 0b10
 	}
 	if (my @c = listCmp($iwsref, \@prev_iws, "diff")){

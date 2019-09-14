@@ -15,7 +15,7 @@
 dxt1Socket = 10.1.153.4,  5001 #Vl.work both "5001" and (int) 5001; "=" and "#" are key chars.
 dxt2Socket = 10.1.153.4,	5002
 
-# dxt2_iws_ignore: TTRX-55-0-JRLUGOJ, TBC-55-0-JRLUGOJ
+ dxt2_iws_ignore: TTRX-55-0-JRLUGOJ, TBC-55-0-JRLUGOJ		#Vld.7:47 PM Monday, June 11, 2018
 		
 #previous check session Status:	## ":" and "#" are key chars.
 		## previous dxt1 status:
@@ -25,9 +25,9 @@ dxt1_iws: TDSC-1-3 TDSC-30-0 TTRX-58-0 TBC-58-0 TDSC-3-0 TTRX-57-0 TTRX-69-0 TTR
 
 		
 		##previous dxt2 status:
-dxt2_dtcbIdx: 66 35
-dxt2_dtcbIdxAlias: 66 NADRAG 35 ROSIUTA
-dxt2_iws: CLS-0 TDSC-72-0 TDSC-82-0 TDSC-75-0 TDSC-52-0 TDSC-1-0 TDSC-62-0
+dxt2_dtcbIdx: 66 35 80 76 ##Vl. Tue Jun 12 21:01:08 2018
+dxt2_dtcbIdxAlias: 66 NADRAG 35 ROSIUTA 80 BISTRA 76 TARSOLT ##Vl. Tue Jun 12 21:01:08 2018
+dxt2_iws: TTRX-80-1 TDSC-72-0 TDSC-82-0 TDSC-75-0 TBC-80-0 TDSC-52-0 TDSC-1-0 TTRX-80-0 TDSC-62-0 TDSC-76-0 TDSC-56-0 ##Vl. Tue Jun 12 21:01:08 2018
 
 From here are comments.., put what do you want:
 
