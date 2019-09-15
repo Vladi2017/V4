@@ -143,9 +143,17 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	while (<$hDxtCells>) {chomp; push @cellmap, split(/ +/)} #Vl.avoid \n on last field
 	close $hDxtCells;
 	undef my $timeout;
-	my $exp = Expect->new($telnet, @{$dxtS{$dxtNum}}); #Vl. @{$aref}
+	undef my $exp;
+	say "exp before new: $exp.\n";
+	$exp = Expect->new($telnet, @{$dxtS{$dxtNum}}); #Vl. @{$aref}
+	say "exp after new: $exp.\n";
 	# $exp->send("\r\n\r\n");
 	# say "manual_stty: ", $exp->manual_stty;
+	if (not defined $exp) {
+		say "Vladi: target connection fail!!\n";
+		POSIX::_exit(1)	#Vld. see perldoc -f exit
+	}
+	$exp->debug(2);
 	$exp->log_stdout(0);
 	$exp->expect(10,
 		'-re', "USERNAME <|PASSWORD <", sub {$exp->send("SYSTEM\r"); exp_continue},
