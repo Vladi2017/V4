@@ -144,20 +144,15 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	close $hDxtCells;
 	undef my $timeout;
 	undef my $exp;
-	say "exp before new: $exp.\n";
 	$exp = Expect->new($telnet, @{$dxtS{$dxtNum}}); #Vl. @{$aref}
-	say "exp after new: $exp.\n";
 	# $exp->send("\r\n\r\n");
 	# say "manual_stty: ", $exp->manual_stty;
-	if (not defined $exp) {
-		say "Vladi: target connection fail!!\n";
-		POSIX::_exit(1)	#Vld. see perldoc -f exit
-	}
-	$exp->debug(2);
+	# $exp->debug(2);
 	$exp->log_stdout(0);
 	$exp->expect(10,
 		'-re', "USERNAME <|PASSWORD <", sub {$exp->send("SYSTEM\r"); exp_continue},
 					 "< ", sub {$exp->send("ZC?;\r")});
+	die "Target connection fail!!\n" unless defined $exp->match();
 	$exp->send("ZAHO::NR=3939;\r"); #Vl.get DXT-TBS CONNECTION BREAK (dtcb) alarms
 	$exp->clear_accum();
 	$exp->expect(10, 'EXECUTED');

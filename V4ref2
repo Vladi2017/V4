@@ -19,9 +19,9 @@ dxt2Socket = 10.1.153.4,	5002
 		
 #previous check session Status:	## ":" and "#" are key chars.
 		## previous dxt1 status:
-dxt1_dtcbIdx:  ##Vl. Sun Sep 15 18:51:55 2019
-dxt1_dtcbIdxAlias:  ##Vl. Sun Sep 15 18:51:55 2019
-dxt1_iws:  ##Vl. Sun Sep 15 18:51:55 2019
+dxt1_dtcbIdx:  38 58 39 ##Vl. Sun Sep 15 20:45:43 2019
+dxt1_dtcbIdxAlias:  38 CARLIBABA 58 MESTECANIS 39 BOTOS ##Vl. Sun Sep 15 20:45:43 2019
+dxt1_iws:  TDSC-1-3 TTRX-58-0 TBC-58-0 TDSC-3-0 TDSC-1-0 TDSC-30-0 TDSC-91-0 ##Vl. Sun Sep 15 20:45:43 2019
 
 		
 		##previous dxt2 status:
