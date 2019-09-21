@@ -93,6 +93,12 @@ my %opt = (	#Vl.options
     nnm => "ts dxt$dxtNum:_noNews;; ", ##noNewsMessage
 );
 
+sub noValidLine {
+	# s/\015?\012/\n/; #Vld.crlf in octal
+	return undef if /bin/;
+	$_ .= "Lilly was here"
+}
+
 sub mainWork1 {#Vl.use external var. $dxtNum
 	my (@dxt1S, @dxt2S);
 	my (@prev_dtcbIdx, @prev_dtcbIdxAlias, @prev_iws);
@@ -101,6 +107,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	open my $in, '<', "./V4ref2" or die "Can't open the file ./V4ref2: $! .., ##Vl. you should run from V4 directory..\n";
 	while (<$in>) {
 		last if /comment/;
+		print if noValidLine;
 		chomp;
 		next if /^\s*$/;	##Vl.make test case..
 		next if /^\s*#+/;##Vl.make test case..with /^\s*#+/
