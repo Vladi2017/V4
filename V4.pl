@@ -5,7 +5,7 @@ package Foo;
 use strict;
 # no strict "refs";
 use warnings;
-use constant REV => "13, 8:56 PM Tuesday, June 12, 2018";
+use constant REV => "14, 7:16 PM Monday, September 16, 2019";
 use v5.14;
 sub getCellAliasOrIdx {
   my ($cellmapref, $AliasOrIdx) = @_[0, 1]; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
@@ -152,7 +152,13 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	$exp->expect(10,
 		'-re', "USERNAME <|PASSWORD <", sub {$exp->send("SYSTEM\r"); exp_continue},
 					 "< ", sub {$exp->send("ZC?;\r")});
-	die "Target connection fail!!\n" unless defined $exp->match();
+	die "NS - NoSession!!\n" if not defined $monitoring and not defined $exp->match();
+	# print "NS" and $exp->hard_close() and return 1 if not defined $exp->match();#very exotic, hard_close() seems don't return true..
+	if (not defined $exp->match()) {
+		print "NS$dxtNum ";
+		$exp->hard_close();
+		return 1
+	}
 	$exp->send("ZAHO::NR=3939;\r"); #Vl.get DXT-TBS CONNECTION BREAK (dtcb) alarms
 	$exp->clear_accum();
 	$exp->expect(10, 'EXECUTED');
