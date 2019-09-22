@@ -5,7 +5,7 @@ package Foo;
 use strict;
 # no strict "refs";
 use warnings;
-use constant REV => "14, 7:16 PM Monday, September 16, 2019";
+use constant REV => "14_1, 9:25 PM Saturday, September 21, 2019";
 use v5.14;
 sub getCellAliasOrIdx {
   my ($cellmapref, $AliasOrIdx) = @_[0, 1]; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
@@ -75,6 +75,7 @@ my $Usage = "Usage:\n$0 [--help]\n$0 dxt1|dxt2\n$0 --monitoringRO2 ##Vl.mainly f
 # say "nr params: ", $#ARGV + 1, " @ARGV";
 undef my $dxtNum;
 undef my $monitoring;
+say "..started $0 rev.", REV, ". Current system time is: ".scalar localtime;
 die $Usage if (not @ARGV or @ARGV > 1);
 for ($ARGV[$#ARGV]){
   no warnings 'experimental';
@@ -84,7 +85,6 @@ for ($ARGV[$#ARGV]){
   $monitoring = 1	when $_ eq "--monitoringRO2";
   default {die $Usage}
 }
-say "..started $0 rev.", REV if not $monitoring;
 use Expect;
 push @INC, "../";
 require Vutils::Vutils1;
@@ -93,10 +93,12 @@ my %opt = (	#Vl.options
     nnm => "ts dxt$dxtNum:_noNews;; ", ##noNewsMessage
 );
 
-sub noValidLine {
-	# s/\015?\012/\n/; #Vld.crlf in octal
-	return undef if /bin/;
-	$_ .= "Lilly was here"
+sub validLine {#Vld.. and if it's valid make a little processing
+	s/\015?\012//; #Vld.crlf in octal
+	return undef if /^\s*$/ or /^\s*#+/;
+	s/\s*#.*$// if /#/;
+	s/\s+$//;
+	$_ #Vld. normally should work without this but it doesn't (see git commit)
 }
 
 sub mainWork1 {#Vl.use external var. $dxtNum
@@ -107,12 +109,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	open my $in, '<', "./V4ref2" or die "Can't open the file ./V4ref2: $! .., ##Vl. you should run from V4 directory..\n";
 	while (<$in>) {
 		last if /comment/;
-		print if noValidLine;
-		chomp;
-		next if /^\s*$/;	##Vl.make test case..
-		next if /^\s*#+/;##Vl.make test case..with /^\s*#+/
-		s/\s*#.*$// if /#/;
-		s/\s+$//;
+		next if not validLine;
 		# say $_;
 		my $cut1;
 		if (/Socket/){
@@ -147,7 +144,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	my %dxtS = (1 => \@dxt1S, 2 => \@dxt2S); #Vl.hash of arrays
 	open my $hDxtCells, '<', "./dxt$dxtNum"."Cells.txt" or die "Can't open the file ./dxt$dxtNum"."Cells.txt: $!";
 	my @cellmap;
-	while (<$hDxtCells>) {chomp; push @cellmap, split(/ +/)} #Vl.avoid \n on last field
+	while (<$hDxtCells>) {next if not validLine; push @cellmap, split(/ +/)}
 	close $hDxtCells;
 	undef my $timeout;
 	undef my $exp;
@@ -185,7 +182,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	}
 	my ($iwsref, $suspect_iwsref) = get_iws \@dtcbIdx, \@cellmap, \@iws_ignore1, $exp;
 	my $log1 = sub {
-		say "\n\ndxt$dxtNum log, ".scalar localtime;
+		say "\ndxt$dxtNum log, ".scalar localtime;
 		# no warnings;
 		say "dtcbIdx array: @dtcbIdx";
 		say "dtcbIdxAlias array: @dtcbIdxAlias";
@@ -213,12 +210,12 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 		$sChg1 |= 0b100
 	}
 	$sChg1 |= 0b1000 if listCmp(\@prev_iws, $iwsref, "diff");
-	if ($opt{nnm} and not @{$suspect_iwsref} and not $sChg1 and @dtcbIdx == @prev_dtcbIdx and not listCmp(\@dtcbIdx, \@prev_dtcbIdx, "diff")){
+	if ($monitoring and $opt{nnm} and not @{$suspect_iwsref} and not $sChg1 and @dtcbIdx == @prev_dtcbIdx and not listCmp(\@dtcbIdx, \@prev_dtcbIdx, "diff")){
 		print scalar localtime if $opt{nnm} =~ /^ts/;
 		$opt{nnm} =~ s/^ts\s+//;
 		print $opt{nnm}
 	}
-	if (not $monitoring and not @{$suspect_iwsref}) {&$log1;	say "iws array: @{$iwsref}"}
+	if (not $monitoring and not @{$suspect_iwsref}) {&$log1; say "iws array: @{$iwsref}"}
 	if (@{$suspect_iwsref}) {
 		&$log1;
 		my @iiws = @{$iwsref}; #Vld.initial iws, case dxt2 log, Sun Jun  3 06:43:43 2018 in V4log1 file
