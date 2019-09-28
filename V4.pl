@@ -5,7 +5,7 @@ package Foo;
 use strict;
 # no strict "refs";
 use warnings;
-use constant REV => "14_1, 9:25 PM Saturday, September 21, 2019";
+use constant REV => "14_2, 6:43 PM Saturday, September 28, 2019";
 use v5.14;
 sub getCellAliasOrIdx {
   my ($cellmapref, $AliasOrIdx) = @_[0, 1]; #Vl. @a = @{$aref}; ${$aref}[3] == $aref->[3]
@@ -93,14 +93,6 @@ my %opt = (	#Vl.options
     nnm => "ts dxt$dxtNum:_noNews;; ", ##noNewsMessage
 );
 
-sub validLine {#Vld.. and if it's valid make a little processing
-	s/\015?\012//; #Vld.crlf in octal
-	return undef if /^\s*$/ or /^\s*#+/;
-	s/\s*#.*$// if /#/;
-	s/\s+$//;
-	$_ #Vld. normally should work without this but it doesn't (see git commit)
-}
-
 sub mainWork1 {#Vl.use external var. $dxtNum
 	my (@dxt1S, @dxt2S);
 	my (@prev_dtcbIdx, @prev_dtcbIdxAlias, @prev_iws);
@@ -109,7 +101,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	open my $in, '<', "./V4ref2" or die "Can't open the file ./V4ref2: $! .., ##Vl. you should run from V4 directory..\n";
 	while (<$in>) {
 		last if /comment/;
-		next if not validLine;
+		next if not validLine();
 		# say $_;
 		my $cut1;
 		if (/Socket/){
@@ -144,7 +136,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	my %dxtS = (1 => \@dxt1S, 2 => \@dxt2S); #Vl.hash of arrays
 	open my $hDxtCells, '<', "./dxt$dxtNum"."Cells.txt" or die "Can't open the file ./dxt$dxtNum"."Cells.txt: $!";
 	my @cellmap;
-	while (<$hDxtCells>) {next if not validLine; push @cellmap, split(/ +/)}
+	while (<$hDxtCells>) {next if not validLine(); push @cellmap, split(/ +/)}
 	close $hDxtCells;
 	undef my $timeout;
 	undef my $exp;
