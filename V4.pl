@@ -136,7 +136,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	my %dxtS = (1 => \@dxt1S, 2 => \@dxt2S); #Vl.hash of arrays
 	open my $hDxtCells, '<', "./dxt$dxtNum"."Cells.txt" or die "Can't open the file ./dxt$dxtNum"."Cells.txt: $!";
 	my @cellmap;
-	while (<$hDxtCells>) {next if not validLine(); push @cellmap, split(/ +/)}
+	while (<$hDxtCells>) {next if not validLine(); push @cellmap, split(/\s+/)}
 	close $hDxtCells;
 	undef my $timeout;
 	undef my $exp;
@@ -144,6 +144,7 @@ sub mainWork1 {#Vl.use external var. $dxtNum
 	# $exp->send("\r\n\r\n");
 	# say "manual_stty: ", $exp->manual_stty;
 	# $exp->debug(2);
+	say $exp->command if not $monitoring;
 	$exp->log_stdout(0);
 	$exp->expect(10,
 		'-re', "USERNAME <|PASSWORD <", sub {$exp->send("SYSTEM\r"); exp_continue},
